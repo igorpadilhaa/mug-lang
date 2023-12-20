@@ -1,20 +1,45 @@
 package engine
 
 import (
-	"github.com/igorpadilhaa/mug/parser"
 	"github.com/igorpadilhaa/mug/lexer"
+	"github.com/igorpadilhaa/mug/parser"
 
 	"fmt"
 )
 
-type Value interface {
+type MugValue struct {
+	Type MugType
+	data interface{}
 }
 
-var variables map[string]Value = map[string]Value{
-	"hello": "Hello",
+func (value MugValue) AsString() (string, error) {
+	if value.Type == MUG_STRING {
+		return value.data.(string), nil
+	}
+
+	return "", CastError(MUG_STRING, value.Type)
 }
 
-func Eval(node parser.ParsedNode) (Value, error) {
+func CastError(expected MugType, got MugType) error {
+	return fmt.Errorf("can not cast %v to %v", expected, got)
+}
+
+var nothing = MugValue{MUG_NOTHING, nil}
+
+func newValue(data interface{}) MugValue {
+	switch data.(type) {
+	case string:
+		return MugValue{MUG_STRING, data}
+	default:
+		panic(fmt.Errorf("unsupported conversion to MugValue %T", data))
+	}
+}
+
+var variables map[string]MugValue = map[string]MugValue{
+	"hello": newValue("Hello"),
+}
+
+func Eval(node parser.ParsedNode) (MugValue, error) {
 	switch t := node.(type) {
 	case parser.ParsedProgram:
 		return evalProgram(t)
@@ -36,56 +61,61 @@ func Eval(node parser.ParsedNode) (Value, error) {
 	}
 }
 
-func evalProgram(program parser.ParsedProgram) (Value, error) {
+func evalProgram(program parser.ParsedProgram) (MugValue, error) {
 	for _, node := range program {
 		_, err := Eval(node)
 		if err != nil {
-			return nil, err
+			return nothing, err
 		}
 	}
-	return nil, nil
+	return nothing, nil
 }
 
-func evalLiteral(literal parser.ParsedLiteral) (Value, error) {
+func evalLiteral(literal parser.ParsedLiteral) (MugValue, error) {
 	data := literal.Data
 	if data.Type != lexer.TOKEN_STRING {
-		return nil, fmt.Errorf("unable to eval literal %s, unknown type %s", data.Content, data.Type)
+		return nothing, fmt.Errorf("unable to eval literal %s, unknown type %s", data.Content, data.Type)
 	}
 
-	unquoted := data.Content[1:len(data.Content)-1]
-	return unquoted, nil
+	unquoted := data.Content[1 : len(data.Content)-1]
+	return newValue(unquoted), nil
 }
 
-func evalFunction(fc parser.ParsedFunctionCall) (Value, error) {
+func evalFunction(fc parser.ParsedFunctionCall) (MugValue, error) {
 	if fc.Name != "print" {
-		return nil, fmt.Errorf("unknown function %q", fc.Name)
+		return nothing, fmt.Errorf("unknown function %q", fc.Name)
 	}
 
 	args, err := evalArgumentList(fc.Args)
 	if err != nil {
-		return nil, err
+		return nothing, err
 	}
 
 	var anys []any
 	for _, arg := range args {
-		anys = append(anys, arg)
+		stringfied, err := arg.AsString()
+		if err != nil {
+			return nothing, err
+		}
+
+		anys = append(anys, stringfied)
 	}
 
 	fmt.Println(anys...)
-	return nil, nil
+	return nothing, nil
 }
 
-func evalVariable(variable parser.ParsedVariable) (Value, error) {
+func evalVariable(variable parser.ParsedVariable) (MugValue, error) {
 	value, exist := variables[variable.Name]
 	if !exist {
-		return nil, fmt.Errorf("undeclared variable %q", variable.Name)
+		return nothing, fmt.Errorf("undeclared variable %q", variable.Name)
 	}
 	return value, nil
 }
 
-func evalArgumentList(list parser.ParsedArgumentList) ([]Value, error) {
-	var values []Value
-	
+func evalArgumentList(list parser.ParsedArgumentList) ([]MugValue, error) {
+	var values []MugValue
+
 	for _, item := range list.Values {
 		value, err := Eval(item)
 		if err != nil {
@@ -97,12 +127,12 @@ func evalArgumentList(list parser.ParsedArgumentList) ([]Value, error) {
 	return values, nil
 }
 
-func evalVariableAssignment(assignment parser.ParsedVariableAssigment) (Value, error) {
+func evalVariableAssignment(assignment parser.ParsedVariableAssigment) (MugValue, error) {
 	value, err := Eval(assignment.Value)
 	if err != nil {
-		return nil, err
+		return nothing, err
 	}
 
-	variables[assignment.Variable.Name] = value 
-	return nil, nil
+	variables[assignment.Variable.Name] = value
+	return nothing, nil
 }
