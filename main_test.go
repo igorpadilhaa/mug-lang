@@ -1,8 +1,14 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/igorpadilhaa/mug/engine"
+)
 
 func TestRun(t *testing.T) {
+	engine.SetVar("hello", "Hello")
+
 	err := Run(`
 		user = "mingau"
 		another = user

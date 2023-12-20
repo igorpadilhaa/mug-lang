@@ -1,5 +1,17 @@
 package engine
 
+var variables map[string]MugValue = map[string]MugValue{}
+
+var functions map[string]MugFunc = map[string]MugFunc{}
+
+func SetVar(name string, value interface{}) {
+	variables[name] = newValue(value)
+}
+
+func DefineFunc(name string, fn MugFunc) {
+	functions[name] = fn
+}
+
 type CallContext struct {
 	Args     []MugValue
 	err      error

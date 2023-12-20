@@ -4,19 +4,10 @@ import (
 	"github.com/igorpadilhaa/mug/engine"
 	"github.com/igorpadilhaa/mug/parser"
 	"github.com/igorpadilhaa/mug/lexer"
+	_ "github.com/igorpadilhaa/mug/std"
 
 	"fmt"
 )
-
-func main() {
-	err := Run(`
-		print(hello, world)
-		print()
-		`)
-	if err != nil {
-		fmt.Printf("ERROR: %s\n", err)
-	}
-}
 
 func Run(code string) error {
 	tokenizer := lexer.Tokenizer{}

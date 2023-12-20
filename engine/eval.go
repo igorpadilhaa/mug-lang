@@ -35,14 +35,6 @@ func newValue(data interface{}) MugValue {
 	}
 }
 
-var variables map[string]MugValue = map[string]MugValue{
-	"hello": newValue("Hello"),
-}
-
-var functions map[string]MugFunc = map[string]MugFunc{
-	"print": print,
-}
-
 func Eval(node parser.ParsedNode) (MugValue, error) {
 	switch t := node.(type) {
 	case parser.ParsedProgram:
