@@ -39,6 +39,10 @@ var variables map[string]MugValue = map[string]MugValue{
 	"hello": newValue("Hello"),
 }
 
+var functions map[string]MugFunc = map[string]MugFunc{
+	"print": print,
+}
+
 func Eval(node parser.ParsedNode) (MugValue, error) {
 	switch t := node.(type) {
 	case parser.ParsedProgram:
@@ -82,7 +86,8 @@ func evalLiteral(literal parser.ParsedLiteral) (MugValue, error) {
 }
 
 func evalFunction(fc parser.ParsedFunctionCall) (MugValue, error) {
-	if fc.Name != "print" {
+	fn, exists := functions[fc.Name]
+	if !exists {
 		return nothing, fmt.Errorf("unknown function %q", fc.Name)
 	}
 
@@ -91,18 +96,13 @@ func evalFunction(fc parser.ParsedFunctionCall) (MugValue, error) {
 		return nothing, err
 	}
 
-	var anys []any
-	for _, arg := range args {
-		stringfied, err := arg.AsString()
-		if err != nil {
-			return nothing, err
-		}
-
-		anys = append(anys, stringfied)
+	callCtx := CallContext{
+		Args: args,
+		retValue: nothing,
 	}
 
-	fmt.Println(anys...)
-	return nothing, nil
+	fn(callCtx)
+	return callCtx.retValue, callCtx.err
 }
 
 func evalVariable(variable parser.ParsedVariable) (MugValue, error) {
