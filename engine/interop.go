@@ -4,8 +4,14 @@ var variables map[string]MugValue = map[string]MugValue{}
 
 var functions map[string]MugFunc = map[string]MugFunc{}
 
-func SetVar(name string, value interface{}) {
-	variables[name] = newValue(value)
+func SetVar(name string, value interface{}) error {
+	mValue, err := NewValue(value)
+	if err != nil {
+		return err
+	}
+
+	variables[name] = mValue
+	return nil
 }
 
 func DefineFunc(name string, fn MugFunc) {

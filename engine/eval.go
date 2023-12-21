@@ -36,14 +36,14 @@ func CastError(expected MugType, got MugType) error {
 
 var nothing = MugValue{MUG_NOTHING, nil}
 
-func newValue(data interface{}) MugValue {
+func NewValue(data interface{}) (MugValue, error) {
 	switch data.(type) {
 	case string:
-		return MugValue{MUG_STRING, data}
-	case int:
-		return MugValue{MUG_INT, data}
+		return MugValue{MUG_STRING, data}, nil
+	case int64:
+		return MugValue{MUG_INT, data}, nil
 	default:
-		panic(fmt.Errorf("unsupported conversion to MugValue %T", data))
+		return nothing, fmt.Errorf("unsupported conversion to MugValue %T", data)
 	}
 }
 
@@ -85,14 +85,14 @@ func evalLiteral(literal parser.ParsedLiteral) (MugValue, error) {
 	switch data.Type {
 	case lexer.TOKEN_STRING:
 		unquoted := data.Content[1 : len(data.Content)-1]
-		return newValue(unquoted), nil
-	
+		return NewValue(unquoted)
+
 	case lexer.TOKEN_INTEGER:
 		parsed, err := strconv.Atoi(data.Content)
 		if err != nil {
 			return nothing, fmt.Errorf("failed to parse integer %s", data.Content)
 		}
-		return newValue(parsed), nil
+		return NewValue(parsed)
 	}
 
 	return nothing, fmt.Errorf("unable to eval literal %s, unknown type %s", data.Content, data.Type)
@@ -110,7 +110,7 @@ func evalFunction(fc parser.ParsedFunctionCall) (MugValue, error) {
 	}
 
 	callCtx := CallContext{
-		Args: args,
+		Args:     args,
 		retValue: nothing,
 	}
 
