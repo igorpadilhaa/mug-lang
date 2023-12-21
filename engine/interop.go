@@ -26,4 +26,4 @@ func (ctx *CallContext) Return(value MugValue) {
 	ctx.retValue = value
 }
 
-type MugFunc func(ctx CallContext)
+type MugFunc func(ctx *CallContext)

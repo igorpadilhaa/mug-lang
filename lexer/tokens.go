@@ -20,6 +20,7 @@ const (
 	TOKEN_COMMA
 	TOKEN_OPASSING
 	TOKEN_STRING
+	TOKEN_INTEGER
 )
 
 func (tokenType TokenType) String() string {
@@ -40,6 +41,8 @@ func (tokenType TokenType) String() string {
 		return "TK_OP_EQU"
 	case TOKEN_STRING:
 		return "TK_STRING"
+	case TOKEN_INTEGER:
+		return "TK_INTEGER"
 	default:
 		panic(fmt.Errorf("unknown token type %d", tokenType))
 	}

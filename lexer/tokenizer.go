@@ -73,6 +73,9 @@ func (tokenizer *Tokenizer) Tokens(code string) ([]Token, error) {
 			case letter == ',':
 				tokenType = TOKEN_COMMA
 
+			case unicode.IsDigit(letter):
+				tokenType = TOKEN_INTEGER
+
 			case unicode.IsLetter(letter):
 				tokenType = TOKEN_NAME
 
@@ -95,6 +98,15 @@ func (tokenizer *Tokenizer) Tokens(code string) ([]Token, error) {
 
 		case TOKEN_NAME:
 			if !unicode.IsLetter(letter) {
+				appendToken = true
+				break
+			}
+
+			blob += string(letter)
+			tokenizer.Position += 1
+
+		case TOKEN_INTEGER:
+			if !unicode.IsDigit(letter) {
 				appendToken = true
 				break
 			}

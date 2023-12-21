@@ -156,7 +156,7 @@ func ParseValue(tokenizer *lexer.Tokenizer) (ParsedNode, error) {
 	}
 
 	switch tk.Type {
-	case lexer.TOKEN_STRING:
+	case lexer.TOKEN_STRING, lexer.TOKEN_INTEGER:
 		tokenizer.Next()
 		return ParsedLiteral{tk}, nil
 	}

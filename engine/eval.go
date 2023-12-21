@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"strconv"
+
 	"github.com/igorpadilhaa/mug/lexer"
 	"github.com/igorpadilhaa/mug/parser"
 
@@ -20,6 +22,14 @@ func (value MugValue) AsString() (string, error) {
 	return "", CastError(MUG_STRING, value.Type)
 }
 
+func (value MugValue) AsInt() (int64, error) {
+	if value.Type == MUG_INT {
+		return value.data.(int64), nil
+	}
+
+	return -1, CastError(MUG_INT, value.Type)
+}
+
 func CastError(expected MugType, got MugType) error {
 	return fmt.Errorf("can not cast %v to %v", expected, got)
 }
@@ -30,6 +40,8 @@ func newValue(data interface{}) MugValue {
 	switch data.(type) {
 	case string:
 		return MugValue{MUG_STRING, data}
+	case int:
+		return MugValue{MUG_INT, data}
 	default:
 		panic(fmt.Errorf("unsupported conversion to MugValue %T", data))
 	}
@@ -69,12 +81,21 @@ func evalProgram(program parser.ParsedProgram) (MugValue, error) {
 
 func evalLiteral(literal parser.ParsedLiteral) (MugValue, error) {
 	data := literal.Data
-	if data.Type != lexer.TOKEN_STRING {
-		return nothing, fmt.Errorf("unable to eval literal %s, unknown type %s", data.Content, data.Type)
+
+	switch data.Type {
+	case lexer.TOKEN_STRING:
+		unquoted := data.Content[1 : len(data.Content)-1]
+		return newValue(unquoted), nil
+	
+	case lexer.TOKEN_INTEGER:
+		parsed, err := strconv.Atoi(data.Content)
+		if err != nil {
+			return nothing, fmt.Errorf("failed to parse integer %s", data.Content)
+		}
+		return newValue(parsed), nil
 	}
 
-	unquoted := data.Content[1 : len(data.Content)-1]
-	return newValue(unquoted), nil
+	return nothing, fmt.Errorf("unable to eval literal %s, unknown type %s", data.Content, data.Type)
 }
 
 func evalFunction(fc parser.ParsedFunctionCall) (MugValue, error) {
@@ -93,7 +114,7 @@ func evalFunction(fc parser.ParsedFunctionCall) (MugValue, error) {
 		retValue: nothing,
 	}
 
-	fn(callCtx)
+	fn(&callCtx)
 	return callCtx.retValue, callCtx.err
 }
 
