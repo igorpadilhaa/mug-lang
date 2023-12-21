@@ -31,7 +31,7 @@ func (value MugValue) AsInt() (int64, error) {
 }
 
 func CastError(expected MugType, got MugType) error {
-	return fmt.Errorf("can not cast %v to %v", expected, got)
+	return fmt.Errorf("can not cast %#v to %v", expected, got)
 }
 
 var nothing = MugValue{MUG_NOTHING, nil}
@@ -92,7 +92,7 @@ func evalLiteral(literal parser.ParsedLiteral) (MugValue, error) {
 		if err != nil {
 			return nothing, fmt.Errorf("failed to parse integer %s", data.Content)
 		}
-		return NewValue(parsed)
+		return NewValue(int64(parsed))
 	}
 
 	return nothing, fmt.Errorf("unable to eval literal %s, unknown type %s", data.Content, data.Type)

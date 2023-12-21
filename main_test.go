@@ -13,7 +13,8 @@ func TestRun(t *testing.T) {
 		user = "mingau"
 		another = user
 		print(hello, another)
-		print(print("error?"))
+		print(string(print()))
+		print(string(1234))
 	`)
 
 	if err != nil {
